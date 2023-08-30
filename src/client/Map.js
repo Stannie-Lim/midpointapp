@@ -41,16 +41,13 @@ const calculateMid = (markers) => {
     lng: marker.lng,
   }));
 
-  const x1 = coords[0].lat;
-  const x2 = coords[1].lat;
+  const avgX =
+    markers.reduce((acc, marker) => acc + marker.lat, 0) / coords.length;
+  const avgY =
+    markers.reduce((acc, marker) => acc + marker.lng, 0) / coords.length;
 
-  const y1 = coords[0].lng;
-  const y2 = coords[1].lng;
-
-  const midx = (x1 + x2) / 2;
-  const midy = (y1 + y2) / 2;
-
-  return { lat: midx, lng: midy };
+  console.log(avgX, avgY);
+  return { lat: avgX, lng: avgY };
 };
 
 const Input = ({ markers, setMarkers }) => {
