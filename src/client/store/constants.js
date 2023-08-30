@@ -1,1 +1,0 @@
-export const GET_SCHOOLS = 'GET_SCHOOLS';

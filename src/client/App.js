@@ -1,32 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { HashRouter, Route } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
+import React, { useState, useEffect } from "react";
+import { HashRouter, Route } from "react-router-dom";
+import { TextField, CircularProgress } from "@mui/material";
+import GooglePlacesAutocomplete from "react-google-places-autocomplete";
+import { getGeocode, getLatLng } from "use-places-autocomplete";
+import { useLoadScript } from "@react-google-maps/api";
+import { useGoogleMap } from "@react-google-maps/api";
 
-// store
-import { getSchools } from './store/store';
-
-//components 
-
+import socket from "./socket";
+import Map from "./Map";
 
 const App = () => {
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: "",
+    libraries: ["places", "geocoding"],
+  });
 
-	// map dispatch
-	const dispatch = useDispatch();
+  if (!isLoaded) {
+    return <CircularProgress />;
+  }
 
-	// componentdidmount
-	useEffect( () => {
-		// load data
-		dispatch(getSchools());
-	});
-
-	// mapstate
-	const schools = useSelector( ({ schools }) => schools );
-
-	return (
-		<HashRouter>
-			<Route path='/' render={ () => <h1>my fullstack template with redux dont touch it grrrr</h1> } />
-		</HashRouter>
-	);
+  return <Map isLoaded={isLoaded} />;
 };
 
 export default App;
