@@ -492,7 +492,8 @@ function Map({ isLoaded }) {
                       <Typography>
                         {distances[`${marker.lat} ${marker.lng}`].distance} -{" "}
                         {distances[`${marker.lat} ${marker.lng}`].duration} to{" "}
-                        {bars.businesses.find(
+                        {bars &&
+                        bars.businesses.find(
                           (business) =>
                             business.coordinates.latitude ===
                               destinationClicked.lat &&
