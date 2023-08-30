@@ -40,7 +40,7 @@ import socket from "./socket";
 
 const containerStyle = {
   width: "100%",
-  height: "50vh",
+  height: "60vh",
 };
 
 const center = {
@@ -90,7 +90,7 @@ const SingleBar = ({ isBordered, bar, onHover, onBlur, clickBar }) => {
         <CardHeader title={bar.name} />
         <CardMedia
           component="img"
-          height="194"
+          height="100"
           image={bar.image_url}
           alt="Bar image"
         />
@@ -440,11 +440,7 @@ function Map({ isLoaded }) {
           <>
             {markers.map((marker, index) => (
               <Marker
-                onMouseOver={() =>
-                  destinationClicked &&
-                  destinationClicked.id !== marker.id &&
-                  onHover(marker, true)
-                }
+                onMouseOver={() => onHover(marker, true)}
                 onClick={(ev) => {
                   if (!marker.isBusiness && !marker.isMidpoint) {
                     openConfirmation(marker);
@@ -483,7 +479,7 @@ function Map({ isLoaded }) {
       <Grid container item xs={2}>
         <Grid>
           {markers.length ? <Typography>Addresses</Typography> : null}
-          <ul style={{ maxHeight: "40vh", overflow: "scroll" }}>
+          <ul style={{ maxHeight: "50vh", overflow: "scroll" }}>
             {markers
               .filter((marker) => !marker.isMidpoint && !marker.isBusiness)
               .map((marker, index) => (
@@ -495,7 +491,22 @@ function Map({ isLoaded }) {
                     <>
                       <Typography>
                         {distances[`${marker.lat} ${marker.lng}`].distance} -{" "}
-                        {distances[`${marker.lat} ${marker.lng}`].duration}
+                        {distances[`${marker.lat} ${marker.lng}`].duration} to{" "}
+                        {bars.businesses.find(
+                          (business) =>
+                            business.coordinates.latitude ===
+                              destinationClicked.lat &&
+                            business.coordinates.longitude ===
+                              destinationClicked.lng
+                        )
+                          ? bars.businesses.find(
+                              (business) =>
+                                business.coordinates.latitude ===
+                                  destinationClicked.lat &&
+                                business.coordinates.longitude ===
+                                  destinationClicked.lng
+                            ).name
+                          : null}
                       </Typography>
                     </>
                   )}
