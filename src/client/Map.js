@@ -5,11 +5,14 @@ import {
   useLoadScript,
   useGoogleMap,
   Circle,
+  DirectionsRenderer,
+  DirectionsService,
+  DistanceMatrixService,
 } from "@react-google-maps/api";
 
 import axios from "axios";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { HashRouter, Route } from "react-router-dom";
 import {
   TextField,
@@ -37,7 +40,7 @@ import socket from "./socket";
 
 const containerStyle = {
   width: "100%",
-  height: "70vh",
+  height: "50vh",
 };
 
 const center = {
@@ -102,7 +105,14 @@ const SingleBar = ({ isBordered, bar, onHover, onBlur, clickBar }) => {
   );
 };
 
-const Input = ({ markers, setMarkers, setBars, map, radius }) => {
+const Input = ({
+  markers,
+  setMarkers,
+  setBars,
+  map,
+  radius,
+  setDestinationClicked,
+}) => {
   const [value, setValue] = useState(null);
 
   const findBars = async ({ lat, lng }) => {
@@ -124,6 +134,7 @@ const Input = ({ markers, setMarkers, setBars, map, radius }) => {
   useEffect(() => {
     socket.on("markers", (data) => {
       const mid = calculateMid(data);
+      setDestinationClicked(null);
       if (mid) {
         if (map) {
           map.setCenter({ lat: mid.lat, lng: mid.lng });
@@ -168,13 +179,85 @@ const ConfirmationModal = ({ close, destroy }) => {
   );
 };
 
+const div = React.createRef();
+
+const Directions = ({ destination, origins, setDistances, distances }) => {
+  const [directions, setDirections] = useState(new Set());
+
+  useEffect(() => {
+    setDirections(new Set());
+  }, [destination]);
+
+  const directionsCallback = (response) => {
+    if (response !== null) {
+      if (response.status === "OK") {
+        const json = JSON.stringify(response);
+
+        if (!directions.has(json)) {
+          const set = new Set([...directions, json]);
+          const lat = response.request.origin.location.lat();
+          const lng = response.request.origin.location.lng();
+
+          const distance = response.routes[0].legs[0].distance.text;
+          const duration = response.routes[0].legs[0].duration.text;
+
+          const origin = `${lat} ${lng}`;
+
+          setDistances({
+            ...distances,
+            [origin]: { distance, duration },
+          });
+
+          setDirections(set);
+        }
+      } else {
+        console.log("response: ", response);
+      }
+    }
+  };
+
+  const arrayDirections = Array.from(directions).map((a) => JSON.parse(a));
+
+  return (
+    <>
+      {origins.map((origin, index) => (
+        <DirectionsService
+          key={index}
+          callback={directionsCallback}
+          options={{
+            destination: {
+              lat: destination.lat,
+              lng: destination.lng,
+            },
+            origin: {
+              lat: origin.lat,
+              lng: origin.lng,
+            },
+            travelMode: "TRANSIT",
+          }}
+        />
+      ))}
+      {arrayDirections.map((direction, index) => (
+        <DirectionsRenderer
+          key={index}
+          options={{
+            preserveViewport: true,
+            directions: direction,
+          }}
+        />
+      ))}
+    </>
+  );
+};
+
 function Map({ isLoaded }) {
   const [map, setMap] = React.useState(null);
   const [markers, setMarkers] = useState([]);
   const [bars, setBars] = useState(null);
   const [hovered, setHovered] = useState(null);
   const [modalOpen, setModalOpen] = useState(null);
-  const [radius, setRadius] = useState(2218);
+  const [radius, setRadius] = useState(804);
+  const [destinationClicked, setDestinationClicked] = useState(null);
 
   const openConfirmation = (marker) => {
     setModalOpen(marker);
@@ -188,7 +271,6 @@ function Map({ isLoaded }) {
     socket.emit("markers");
 
     socket.on("radius", (data) => {
-      console.log(data);
       setRadius(data);
     });
   }, []);
@@ -221,8 +303,10 @@ function Map({ isLoaded }) {
     setMap(null);
   }, []);
 
-  const onClick = (ev, isMidpoint, isBusiness) => {
-    if (!isMidpoint && !isBusiness) {
+  const onClick = (ev, isMidpoint, isBusiness, destination) => {
+    if (isBusiness) {
+      setDestinationClicked(destination);
+    } else if (!isMidpoint && !isBusiness) {
       const lat = ev.latLng.lat();
       const lng = ev.latLng.lng();
 
@@ -318,6 +402,7 @@ function Map({ isLoaded }) {
     }
   };
 
+  const [distances, setDistances] = useState({});
   return isLoaded ? (
     <Grid container>
       <Grid item xs={12}>
@@ -325,6 +410,7 @@ function Map({ isLoaded }) {
           setBars={setBars}
           markers={markers}
           setMarkers={setMarkers}
+          setDestinationClicked={setDestinationClicked}
           map={map}
           radius={radius}
         />
@@ -354,12 +440,16 @@ function Map({ isLoaded }) {
           <>
             {markers.map((marker, index) => (
               <Marker
-                onMouseOver={() => onHover(marker, true)}
+                onMouseOver={() =>
+                  destinationClicked &&
+                  destinationClicked.id !== marker.id &&
+                  onHover(marker, true)
+                }
                 onClick={(ev) => {
                   if (!marker.isBusiness && !marker.isMidpoint) {
                     openConfirmation(marker);
                   } else {
-                    onClick(ev, marker.isMidpoint, marker.isBusiness);
+                    onClick(ev, marker.isMidpoint, marker.isBusiness, marker);
                   }
                 }}
                 icon={marker.icon}
@@ -368,7 +458,6 @@ function Map({ isLoaded }) {
                 position={{ lat: marker.lat, lng: marker.lng }}
               />
             ))}
-
             {bars && (
               <Circle
                 center={{
@@ -378,13 +467,23 @@ function Map({ isLoaded }) {
                 radius={radius}
               />
             )}
+            {destinationClicked && (
+              <Directions
+                destination={destinationClicked}
+                distances={distances}
+                origins={markers.filter(
+                  (marker) => !marker.isMidpoint && !marker.isBusiness
+                )}
+                setDistances={setDistances}
+              />
+            )}
           </>
         </GoogleMap>
       </Grid>
       <Grid container item xs={2}>
         <Grid>
           {markers.length ? <Typography>Addresses</Typography> : null}
-          <ul>
+          <ul style={{ maxHeight: "40vh", overflow: "scroll" }}>
             {markers
               .filter((marker) => !marker.isMidpoint && !marker.isBusiness)
               .map((marker, index) => (
@@ -392,6 +491,14 @@ function Map({ isLoaded }) {
                   <Typography onClick={() => openConfirmation(marker)}>
                     {marker.label}
                   </Typography>
+                  {distances[`${marker.lat} ${marker.lng}`] && (
+                    <>
+                      <Typography>
+                        {distances[`${marker.lat} ${marker.lng}`].distance} -{" "}
+                        {distances[`${marker.lat} ${marker.lng}`].duration}
+                      </Typography>
+                    </>
+                  )}
                   <Button
                     variant="outlined"
                     onClick={() => hoverAddress(marker)}
@@ -412,7 +519,7 @@ function Map({ isLoaded }) {
             wrap="nowrap"
             container
             spacing={3}
-            style={{ overflowX: "scroll", maxWidth: "100vw" }}
+            style={{ overflowX: "scroll", maxWidth: "90vw" }}
           >
             {bars &&
               bars.businesses.map((bar) => (
@@ -441,6 +548,7 @@ function Map({ isLoaded }) {
           }
         />
       )}
+      <div ref={div} />
     </Grid>
   ) : (
     <></>

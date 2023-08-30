@@ -14,7 +14,7 @@ router.get("/bars/:lat/:lng/:radius", async (req, res, next) => {
   const { lat, lng, radius } = req.params;
   const token = process.env.YELP_API_KEY;
 
-  const url = `https://api.yelp.com/v3/businesses/search?latitude=${lat}&longitude=${lng}&radius=2218&categories=bars&sort_by=best_match&limit=50`;
+  const url = `https://api.yelp.com/v3/businesses/search?latitude=${lat}&longitude=${lng}&radius=804&categories=bars&sort_by=rating&limit=20`;
 
   try {
     const response = await axios.get(url, {

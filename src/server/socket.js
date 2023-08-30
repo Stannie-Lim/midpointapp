@@ -1,5 +1,5 @@
 let markers = [];
-let radius = 2218;
+let radius = 804;
 
 module.exports = (io) => {
   io.on("connection", (socket) => {
