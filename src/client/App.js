@@ -8,9 +8,11 @@ import { useGoogleMap } from "@react-google-maps/api";
 
 import socket from "./socket";
 import Map from "./Map";
+import { GOOGLE_API_KEY } from "../../secrets";
 
 const App = () => {
   const { isLoaded } = useLoadScript({
+    googleMapsApiKey: GOOGLE_API_KEY,
     libraries: ["places", "geocoding"],
   });
 

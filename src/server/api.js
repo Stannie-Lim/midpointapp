@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const axios = require("axios");
+require("dotenv").config();
 
 module.exports = router;
 
@@ -11,7 +12,7 @@ router.get("/", async (req, res, next) => {
 
 router.get("/bars/:lat/:lng/:radius", async (req, res, next) => {
   const { lat, lng, radius } = req.params;
-  const token =
+  const token = process.env.YELP_API_KEY;
 
   const url = `https://api.yelp.com/v3/businesses/search?latitude=${lat}&longitude=${lng}&radius=2218&categories=bars&sort_by=best_match&limit=50`;
 
