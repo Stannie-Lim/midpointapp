@@ -493,6 +493,7 @@ function Map({ isLoaded }) {
                         {distances[`${marker.lat} ${marker.lng}`].distance} -{" "}
                         {distances[`${marker.lat} ${marker.lng}`].duration} to{" "}
                         {bars &&
+                        destinationClicked &&
                         bars.businesses.find(
                           (business) =>
                             business.coordinates.latitude ===
