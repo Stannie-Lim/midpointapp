@@ -493,18 +493,25 @@ function Map({ isLoaded }) {
                         {distances[`${marker.lat} ${marker.lng}`].distance} -{" "}
                         {distances[`${marker.lat} ${marker.lng}`].duration} to{" "}
                         {bars &&
+                        bars.businesses &&
                         destinationClicked &&
+                        destinationClicked.lat &&
+                        destinationClicked.lng &&
                         bars.businesses.find(
                           (business) =>
+                            business.coordinates &&
                             business.coordinates.latitude ===
                               destinationClicked.lat &&
+                            business.coordinates &&
                             business.coordinates.longitude ===
                               destinationClicked.lng
                         )
                           ? bars.businesses.find(
                               (business) =>
+                                business.coordinates &&
                                 business.coordinates.latitude ===
                                   destinationClicked.lat &&
+                                business.coordinates &&
                                 business.coordinates.longitude ===
                                   destinationClicked.lng
                             ).name
