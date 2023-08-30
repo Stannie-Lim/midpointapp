@@ -1,9 +1,11 @@
 let markers = [];
+let radius = 2218;
 
 module.exports = (io) => {
   io.on("connection", (socket) => {
     socket.on("markers", () => {
       io.emit("markers", markers);
+      io.emit("radius", radius);
     });
 
     socket.on("room", (data) => {
@@ -22,6 +24,11 @@ module.exports = (io) => {
       markers.push(data);
 
       io.emit("markers", markers);
+    });
+
+    socket.on("radius", (data) => {
+      radius = data;
+      io.emit("radius", data);
     });
 
     socket.on("disconnect", () => {
