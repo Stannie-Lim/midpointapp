@@ -26,10 +26,14 @@ import {
   DialogContent,
   Typography,
   Slider,
+  FormControl,
+  InputLabel,
   Card,
   CardHeader,
   Avatar,
   CardMedia,
+  Select,
+  MenuItem,
   Rating,
   CardContent,
 } from "@mui/material";
@@ -181,7 +185,13 @@ const ConfirmationModal = ({ close, destroy }) => {
 
 const div = React.createRef();
 
-const Directions = ({ destination, origins, setDistances, distances }) => {
+const Directions = ({
+  destination,
+  origins,
+  setDistances,
+  distances,
+  mode,
+}) => {
   const [directions, setDirections] = useState(new Set());
 
   useEffect(() => {
@@ -233,7 +243,7 @@ const Directions = ({ destination, origins, setDistances, distances }) => {
               lat: origin.lat,
               lng: origin.lng,
             },
-            travelMode: "TRANSIT",
+            travelMode: mode,
           }}
         />
       ))}
@@ -250,8 +260,10 @@ const Directions = ({ destination, origins, setDistances, distances }) => {
   );
 };
 
+// Map component
+// taking in one prop which is `isLoaded`
 function Map({ isLoaded }) {
-  const [map, setMap] = React.useState(null);
+  const [map, setMap] = useState(null);
   const [markers, setMarkers] = useState([]);
   const [bars, setBars] = useState(null);
   const [hovered, setHovered] = useState(null);
@@ -403,6 +415,8 @@ function Map({ isLoaded }) {
   };
 
   const [distances, setDistances] = useState({});
+  const [mode, setMode] = useState("DRIVING");
+
   return isLoaded ? (
     <Grid container>
       <Grid item xs={12}>
@@ -414,7 +428,21 @@ function Map({ isLoaded }) {
           map={map}
           radius={radius}
         />
-        <div style={{ marginBottom: "3rem" }} />
+        <div style={{ marginBottom: "1rem" }} />
+        <FormControl fullWidth>
+          <InputLabel>Transportation</InputLabel>
+          <Select
+            value={mode}
+            label="Transportation"
+            onChange={(ev) => setMode(ev.target.value)}
+          >
+            <MenuItem value="DRIVING">Driving</MenuItem>
+            <MenuItem value="TRANSIT">Public transit</MenuItem>
+            <MenuItem value="WALKING">Walking</MenuItem>
+            <MenuItem value="BICYCLING">Bicycling</MenuItem>
+          </Select>
+          <div style={{ marginBottom: "3rem" }} />
+        </FormControl>
       </Grid>
       {/* <Grid container item justifyContent="center">
         <Grid item xs={3}>
@@ -465,6 +493,7 @@ function Map({ isLoaded }) {
             )}
             {destinationClicked && (
               <Directions
+                mode={mode}
                 destination={destinationClicked}
                 distances={distances}
                 origins={markers.filter(
